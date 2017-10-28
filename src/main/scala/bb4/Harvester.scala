@@ -7,44 +7,58 @@ import scala.util.Random
 
 
 
-class Harvester(mothership: Mothership) extends DroneController {
+class Harvester(mothership: Mothership) extends AugmentedDroneController {
+
+  /** The currently harvested mineral, if any */
+  var currentMineral: Option[MineralCrystal] = None
+  var message = ""
 
   override def onTick(): Unit = {
-    if (!isMoving && !isHarvesting) {
-      if (availableStorage == 0) moveTo(mothership)
-      else {
-        val candidateMinerals = knownMinerals.filter(m => m.size > 0 && !m.harvested)
-        if (candidateMinerals.isEmpty) {
+
+    if (availableStorage == 0) {
+      moveTo(mothership)
+      message = "returning to mother"
+    }
+    if (!isHarvesting) {
+      if (currentMineral.nonEmpty) {
+        claimedMinerals -= currentMineral.get
+        currentMineral = None
+        message = "done harvesting"
+      }
+
+      if (!isMoving) {
+        val closestMineral = getClosestAvailableMineral(position)
+        if (closestMineral.isDefined) {
+          moveTo(closestMineral.get)
+          message = "moving toward mineral at " + closestMineral.get.position
+        } else {
           val randomDirection = Vector2(2 * math.Pi * Random.nextDouble())
           val targetPosition = position + 400 * randomDirection
           moveTo(targetPosition)
-        } else {
-          // instead of moving randomly go to known mineral
-          val targetMineral = candidateMinerals.minBy(m => (m.position - position).lengthSquared)
-          moveTo(targetMineral)
-          knownMinerals = candidateMinerals - targetMineral
-          println("new num minerals = " + knownMinerals.size)
+          message = "toward  " + targetPosition
         }
       }
     }
+
+    showText(message)
   }
 
-  override def onMineralEntersVision(mineral: MineralCrystal) = {
-    if (mineral.size > 0 && !mineral.harvested) {
-      knownMinerals += mineral
-      if (availableStorage > 0) moveTo(mineral)
+  override def onArrivesAtMineral(mineral: MineralCrystal) = {
+    harvest(mineral)
+    assert(isHarvesting)
+    println("harvesting")
+    message = "harvesting"
+    claimedMinerals += mineral
+  }
+
+  override def onArrivesAtDrone(drone: Drone) = {
+    if (drone.isInstanceOf[Mothership]) {
+      giveResourcesTo(drone)
+      message = "transerring to mother"
     }
+
   }
 
-  override def onDroneEntersVision(drone: Drone): Unit = {
-    if (drone.isEnemy) {
-      enemies += drone
-    }
-  }
-
-  override def onArrivesAtMineral(mineral: MineralCrystal) = harvest(mineral)
-
-  override def onArrivesAtDrone(drone: Drone) = giveResourcesTo(drone)
 
   override def onDeath(): Unit = {
     Global.harvesters -= this

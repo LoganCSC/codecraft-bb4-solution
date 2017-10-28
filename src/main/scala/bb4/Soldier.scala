@@ -7,7 +7,7 @@ import bb4.Global.enemies
 import scala.util.Random
 
 
-class Soldier extends DroneController {
+class Soldier extends AugmentedDroneController {
 
   override def onTick(): Unit = {
     val droneEnemies = dronesInSight.filter(_.isEnemy)
@@ -39,11 +39,7 @@ class Soldier extends DroneController {
     }
   }
 
-  override def onDroneEntersVision(drone: Drone): Unit = {
-    if (drone.isEnemy) {
-      enemies += drone
-    }
-  }
+
 
   override def onDeath(): Unit = {
     Global.nSoldiers -= 1
