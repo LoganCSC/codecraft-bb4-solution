@@ -1,4 +1,4 @@
-package experiment1
+package bb4
 
 import cwinter.codecraft.core.api.{Drone, MineralCrystal}
 

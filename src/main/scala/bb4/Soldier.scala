@@ -1,8 +1,8 @@
-package experiment1
+package bb4
 
 import cwinter.codecraft.core.api._
 import cwinter.codecraft.util.maths.Vector2
-import experiment1.Global.enemies
+import bb4.Global.enemies
 
 import scala.util.Random
 

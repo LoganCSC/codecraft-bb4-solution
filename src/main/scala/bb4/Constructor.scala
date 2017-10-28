@@ -1,4 +1,4 @@
-package experiment1
+package bb4
 
 import Global.RND
 import cwinter.codecraft.util.maths.Vector2
