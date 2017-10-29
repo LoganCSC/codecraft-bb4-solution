@@ -1,7 +1,5 @@
 package bb4
 
-import cwinter.codecraft.core.api._
-
 import scala.util.Random
 import Global._
 import cwinter.codecraft.util.maths.Vector2
@@ -9,7 +7,7 @@ import cwinter.codecraft.util.maths.Vector2
 
 class Mothership extends AugmentedDroneController {
 
-  mothers :+= this
+  mothers += this
 
   override def onTick(): Unit = {
 
@@ -28,23 +26,25 @@ class Mothership extends AugmentedDroneController {
     if (harvesters.size < maxHarvesters) {
       val h = new Harvester(getRandomMother)
       buildDrone(h, storageModules = 1)
-      harvesters += h
     }
     else if (nSoldiers < 2) {
-      buildDrone(new Soldier, missileBatteries = 3, shieldGenerators = 2)
-      nSoldiers += 1
+      buildDrone(new Soldier, missileBatteries = 2, shieldGenerators = 1, engines = 1)
     }
     else {
-      val newMother = new Constructor
-      buildDrone(newMother, missileBatteries = 1, shieldGenerators = 1, constructors = 2, storageModules = 2)
-      mothers :+= newMother
-      maxHarvesters += 2
+      val r = RND.nextDouble()
+      if (r < 0.5) {
+        val newMother = new Constructor
+        buildDrone(newMother, missileBatteries = 1, shieldGenerators = 1, constructors = 2, storageModules = 2)
+        mothers += newMother
+        maxHarvesters += 1
+      } else {
+        buildDrone(new Soldier, missileBatteries = 2, shieldGenerators = 1, engines = 1)
+      }
     }
   }
 
   override def onDeath() {
-    mothers = mothers.filter(_ != this)
+    mothers -= this
   }
-
 }
 

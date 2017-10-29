@@ -1,45 +1,40 @@
 package bb4
 
-import cwinter.codecraft.core.api._
 import cwinter.codecraft.util.maths.Vector2
-import bb4.Global.enemies
-
+import bb4.Global._
 import scala.util.Random
 
 
 class Soldier extends AugmentedDroneController {
 
   override def onTick(): Unit = {
-    val droneEnemies = dronesInSight.filter(_.isEnemy)
-    if (droneEnemies.nonEmpty) {
-      enemies ++= droneEnemies
-      println("num enemies = " + enemies.size)
+
+    val closestEnemy = getClosestEnemy(position)
+
+    if (closestEnemy.isDefined) {  // !moving?
+      val e = closestEnemy.get
+      if (position != e.lastKnownPosition)
+        moveTo(e.lastKnownPosition)
+    }
+    for (d <- dronesInSight.find(d => d.isEnemy && isInMissileRange(d))) {
+      fireMissilesAt(d)
     }
 
-    enemies.headOption match {
-      case Some(enemy) =>
-        moveTo(enemy.lastKnownPosition)
-        if (enemy.isVisible && missileCooldown <= 0 && isInMissileRange(enemy))
-          fireMissilesAt(enemy)
-      case None =>
-        if (!isMoving) {
-          enemies = enemies.filter(!_.isDead)
-          if (enemies.nonEmpty) {
-            moveTo(enemies.head)
-            //enemies = enemies.tail
-          } else if (Global.harvesters.nonEmpty) {
-            //println("moving to h = " + Global.harvesters.head)
-            moveTo(Global.harvesters.head)
-          } else {
-            val randomDirection = Vector2(2 * math.Pi * Random.nextDouble())
-            val targetPosition = position + 300 * randomDirection
-            moveTo(targetPosition)
-          }
-        }
+    if (!isMoving) {
+      val closeHarveseter = getClosestHarvester(position)
+      if (closeHarveseter.isDefined && !alliesInSight.contains(closeHarveseter.get)) { // protect harvesters
+        moveTo(closeHarveseter.get) // sometimes npe
+      } else {
+        val randomDirection = Vector2(2 * math.Pi * Random.nextDouble())
+        val targetPosition = position + 300 * randomDirection
+        moveTo(targetPosition)
+      }
     }
   }
 
-
+  override def onSpawn(): Unit = {
+    Global.nSoldiers += 1
+  }
 
   override def onDeath(): Unit = {
     Global.nSoldiers -= 1

@@ -45,8 +45,8 @@ class Harvester(mothership: Mothership) extends AugmentedDroneController {
 
   override def onArrivesAtMineral(mineral: MineralCrystal) = {
     harvest(mineral)
-    assert(isHarvesting)
-    println("harvesting")
+    //assert(isHarvesting)
+    //println("harvesting")
     message = "harvesting"
     claimedMinerals += mineral
   }
@@ -56,12 +56,14 @@ class Harvester(mothership: Mothership) extends AugmentedDroneController {
       giveResourcesTo(drone)
       message = "transerring to mother"
     }
-
   }
 
+  override def onSpawn(): Unit = {
+    harvesters += this
+  }
 
   override def onDeath(): Unit = {
-    Global.harvesters -= this
+    harvesters -= this
   }
 }
 

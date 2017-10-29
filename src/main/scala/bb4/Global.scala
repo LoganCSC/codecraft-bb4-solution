@@ -16,10 +16,10 @@ object Global {
   /** Of those we have see, these are the ones that are actively being harvested */
   var claimedMinerals: Set[MineralCrystal] = Set()
 
-  var mothers: Seq[Mothership] = Seq()
+  var mothers: Set[Mothership] = Set()
   var enemies: Set[Drone] = Set()
   var harvesters: Set[Harvester] = Set()
-  var maxHarvesters = 4  // this can change
+  var maxHarvesters = 3  // this can change
   var nSoldiers = 0
 
   def getClosestAvailableMineral(pos: Vector2): Option[MineralCrystal] = {
@@ -34,7 +34,28 @@ object Global {
     }
   }
 
+  def getClosestHarvester(pos: Vector2): Option[Drone] = {
+    val candidates = harvesters.filter(!_.isDead)
+    if (candidates.isEmpty) {
+      None
+    } else {
+      val closest = candidates.minBy(m => (pos - m.lastKnownPosition).lengthSquared)
+      Some(closest)
+    }
+  }
+
+  def getClosestEnemy(pos: Vector2): Option[Drone] = {
+    val candidates = enemies.filter(!_.isDead)
+    if (candidates.isEmpty) {
+      None
+    } else {
+      val closest = candidates.minBy(m => (pos - m.lastKnownPosition).lengthSquared)
+      Some(closest)
+    }
+  }
+
   def getRandomMother: Mothership = {
-    mothers(RND.nextInt(mothers.length))
+    mothers.toList(RND.nextInt(mothers.size))
+    //mothers(RND.nextInt(mothers.length))
   }
 }
