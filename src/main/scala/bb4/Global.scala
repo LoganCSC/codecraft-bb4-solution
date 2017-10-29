@@ -32,12 +32,21 @@ object Global {
 
   private def genWorldLocations(mother: Mothership): List[Vector2] = {
     val rect = mother.worldSize
-    val xDim: Int = (rect.width / GRID_SIZE).toInt
-    val yDim: Int = (rect.height / GRID_SIZE).toInt
+    //val xDim: Int = (rect.width / GRID_SIZE).toInt - 1
+    //val yDim: Int = (rect.height / GRID_SIZE).toInt - 1
+
+    println("rect world  w:" + rect.width + " ht: " + rect.height)
+    val xDim = math.ceil(rect.width / GRID_SIZE).toInt
+    val yDim = math.ceil(rect.height / GRID_SIZE).toInt
+    val xOffset = (0.5 * rect.width / GRID_SIZE).toInt
+    val yOffset = (0.5 * rect.height / GRID_SIZE).toInt
+
     val g = Array.tabulate[Vector2](xDim, yDim) {
-      (x, y) => new  Vector2(x, y)
+      (x, y) => new  Vector2((x - xOffset + 0.5F) * GRID_SIZE , (y - yOffset + 0.5F) * GRID_SIZE)
     }
-    scala.util.Random.shuffle((for (vpos <- g; pos <- vpos) yield pos).toList)
+    val locations = scala.util.Random.shuffle((for (vpos <- g; pos <- vpos) yield pos).toList)
+    println("loc = " + locations.take(10).mkString(", "))
+    locations
   }
 
   def getClosestAvailableMineral(pos: Vector2): Option[MineralCrystal] = {

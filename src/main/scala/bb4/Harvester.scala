@@ -29,7 +29,7 @@ class Harvester(mothership: Mothership) extends AugmentedDroneController {
         moveTo(mothership)
         message = "returning to mother"
       }
-      if (!isHarvesting) {
+      else if (!isHarvesting) {
         if (currentMineral.nonEmpty) {
           claimedMinerals -= currentMineral.get
           currentMineral = None
@@ -74,8 +74,6 @@ class Harvester(mothership: Mothership) extends AugmentedDroneController {
   override def onArrivesAtMineral(mineral: MineralCrystal) = {
     harvest(mineral)
     currentMineral = Some(mineral)
-    //assert(isHarvesting)
-    //println("harvesting")
     message = "harvesting"
     claimedMinerals += mineral
   }

@@ -2,6 +2,7 @@ package bb4
 
 import cwinter.codecraft.util.maths.Vector2
 import bb4.Global._
+import cwinter.codecraft.core.api.Drone
 
 
 class Soldier extends AugmentedDroneController {
@@ -15,7 +16,7 @@ class Soldier extends AugmentedDroneController {
 
     if (closestEnemy.isDefined) {
       val e = closestEnemy.get
-      if (e.isVisible && isInMissileRange(e)) {
+      if (!e.isDead && e.isVisible && isInMissileRange(e)) {
         fireMissilesAt(e)
         moveTo(e)
       } else if (e.lastKnownPosition != position) {
@@ -25,7 +26,7 @@ class Soldier extends AugmentedDroneController {
                              else (positionGoal.get - position).lengthSquared
         if (distToNewGoal < distToLastGoal) {
           moveTo(e.lastKnownPosition)
-          //positionGoal = Some(e.lastKnownPosition)
+          positionGoal = Some(e.lastKnownPosition)
           msg = "moving toward closer enemy: " + e.lastKnownPosition
         }
       }
@@ -38,31 +39,25 @@ class Soldier extends AugmentedDroneController {
   }
 
   override def onArrivesAtPosition(): Unit = {
-    if (positionGoal.isDefined && position == positionGoal.get)
+    if (positionGoal.isDefined && (position - positionGoal.get).length < 3)
       positionGoal = None
     msg = "arrived"
-    //moveSomewhere()
+    moveSomewhere()
+  }
+
+  override def onArrivesAtDrone(drone: Drone): Unit = {
+    msg = "arrived at drone"
+    moveSomewhere()
   }
 
   private def moveSomewhere(): Unit = {
-    val r = RND.nextDouble()
-    if (r < 0.2) {
-      // move to protect harvesters
-      val closeHarveseter = getClosestHarvester(position)
-      if (positionGoal.isEmpty &&closeHarveseter.isDefined && !alliesInSight.contains(closeHarveseter.get)) {
-        positionGoal = Some(closeHarveseter.get.position)
-        moveTo(positionGoal.get)
-        msg = "moving toward harvester"
-      }
+    if (positionGoal.isEmpty) {
+      positionGoal = Some(nextUnvisitedPosition())
+      msg = "toward next unvisited"
     } else {
-      if (positionGoal.isEmpty) {
-        positionGoal = Some(nextUnvisitedPosition())
-        msg = "toward next unvisited"
-      } else {
-        msg = "toward prev unvisited"
-      }
-      moveTo(positionGoal.get)
+      msg = "toward prev unvisited"
     }
+    moveTo(positionGoal.get)
   }
 
   override def onSpawn(): Unit = {
