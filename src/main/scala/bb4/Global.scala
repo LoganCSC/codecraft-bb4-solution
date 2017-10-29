@@ -2,13 +2,14 @@ package bb4
 
 import cwinter.codecraft.core.api.{Drone, MineralCrystal}
 import cwinter.codecraft.util.maths.Vector2
-
 import scala.util.Random
+import cwinter.codecraft.core.api.GameConstants.DroneVisionRange
 
 /** Maintain global state that can be queried by any drone */
 object Global {
 
   val RND = new Random()
+  val GRID_SIZE: Int = DroneVisionRange
 
   /** Crystals that we have seen so far */
   var knownMinerals: Set[MineralCrystal] = Set()
@@ -21,6 +22,23 @@ object Global {
   var harvesters: Set[Harvester] = Set()
   var maxHarvesters = 3  // this can change
   var nSoldiers = 0
+  var unvisitedLocations: Set[Vector2] = Set()
+  var allLocations: List[Vector2] = _
+
+  /** One time initialization */
+  def initialize(mother: Mothership): Unit = {
+    allLocations = genWorldLocations(mother)
+  }
+
+  private def genWorldLocations(mother: Mothership): List[Vector2] = {
+    val rect = mother.worldSize
+    val xDim: Int = (rect.width / GRID_SIZE).toInt
+    val yDim: Int = (rect.height / GRID_SIZE).toInt
+    val g = Array.tabulate[Vector2](xDim, yDim) {
+      (x, y) => new  Vector2(x, y)
+    }
+    scala.util.Random.shuffle((for (vpos <- g; pos <- vpos) yield pos).toList)
+  }
 
   def getClosestAvailableMineral(pos: Vector2): Option[MineralCrystal] = {
     val availableMinerals = (knownMinerals -- claimedMinerals).filter(!_.harvested)
@@ -52,6 +70,16 @@ object Global {
       val closest = candidates.minBy(m => (pos - m.lastKnownPosition).lengthSquared)
       Some(closest)
     }
+  }
+
+  /** @return somewhere no friendly drone has been before */
+  def nextUnvisitedPosition(): Vector2 = {
+    if (allLocations.isEmpty) {
+      allLocations = genWorldLocations(mothers.head) // repopulate
+    }
+    val next = allLocations.head
+    allLocations = allLocations.tail
+    next
   }
 
   def getRandomMother: Mothership = {

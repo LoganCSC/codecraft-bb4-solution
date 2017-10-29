@@ -7,19 +7,24 @@ import cwinter.codecraft.util.maths.Vector2
 
 class Mothership extends AugmentedDroneController {
 
-  mothers += this
+  var msg = ""
+  var moved: Boolean = false
 
   override def onTick(): Unit = {
 
     if (!isConstructing) {
-      makeNewDrone()
+      if (!moved && knownMinerals.nonEmpty) {
+        moveTo(knownMinerals.head)
+        moved = true
+        msg = "moving to mineral"
+      }
+      if (!isMoving) {
+        makeNewDrone()
+        msg = "building"
+      }
     }
-    if (!isMoving) {
-      val randomDirection = Vector2(2 * math.Pi * Random.nextDouble())
-      val targetPosition = position + 50 * randomDirection
-      println("moving mothership to " + targetPosition)
-      moveTo(targetPosition)
-    }
+
+    showText(msg)
   }
 
   def makeNewDrone(): Unit = {
@@ -28,11 +33,11 @@ class Mothership extends AugmentedDroneController {
       buildDrone(h, storageModules = 1)
     }
     else if (nSoldiers < 2) {
-      buildDrone(new Soldier, missileBatteries = 2, shieldGenerators = 1, engines = 1)
+      buildDrone(new Soldier, missileBatteries = 3, shieldGenerators = 1, engines = 1)
     }
     else {
       val r = RND.nextDouble()
-      if (r < 0.5) {
+      if (r < 0.4) {
         val newMother = new Constructor
         buildDrone(newMother, missileBatteries = 1, shieldGenerators = 1, constructors = 2, storageModules = 2)
         mothers += newMother
@@ -41,6 +46,11 @@ class Mothership extends AugmentedDroneController {
         buildDrone(new Soldier, missileBatteries = 2, shieldGenerators = 1, engines = 1)
       }
     }
+  }
+
+  override def onSpawn(): Unit = {
+    Global.initialize(this)
+    mothers += this
   }
 
   override def onDeath() {

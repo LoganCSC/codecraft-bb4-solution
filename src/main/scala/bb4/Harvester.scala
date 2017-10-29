@@ -12,30 +12,39 @@ class Harvester(mothership: Mothership) extends AugmentedDroneController {
   /** The currently harvested mineral, if any */
   var currentMineral: Option[MineralCrystal] = None
   var message = ""
+  var fleeingTicks: Int = 0
+  var fleeing: Boolean = false
+  var goalPosition: Option[Vector2] = None
 
   override def onTick(): Unit = {
 
-    if (availableStorage == 0) {
-      moveTo(mothership)
-      message = "returning to mother"
-    }
-    if (!isHarvesting) {
-      if (currentMineral.nonEmpty) {
-        claimedMinerals -= currentMineral.get
-        currentMineral = None
-        message = "done harvesting"
+    val nearbyEnemy = dronesInSight.find(d => d.isEnemy && d.missileBatteries > 0)
+    if (nearbyEnemy.isDefined) {
+      val dir = (position - nearbyEnemy.get.position).orientation
+      moveInDirection(dir)  // flee
+      fleeing = true
+      message = "fleeing!"
+    } else {
+      if (availableStorage == 0) {
+        moveTo(mothership)
+        message = "returning to mother"
       }
-
-      if (!isMoving) {
-        val closestMineral = getClosestAvailableMineral(position)
-        if (closestMineral.isDefined) {
-          moveTo(closestMineral.get)
-          message = "moving toward mineral at " + closestMineral.get.position
-        } else {
-          val randomDirection = Vector2(2 * math.Pi * Random.nextDouble())
-          val targetPosition = position + 400 * randomDirection
-          moveTo(targetPosition)
-          message = "toward  " + targetPosition
+      if (!isHarvesting) {
+        if (currentMineral.nonEmpty) {
+          claimedMinerals -= currentMineral.get
+          currentMineral = None
+          message = "done harvesting"
+        }
+        if (!isMoving) moveSomewhere()
+      }
+      if (fleeing) {
+        fleeingTicks += 1
+        message = "fleeing " + fleeingTicks
+        if (fleeingTicks > 100) {
+          fleeingTicks = 0
+          fleeing = false
+          message = ""
+          moveSomewhere()
         }
       }
     }
@@ -43,8 +52,28 @@ class Harvester(mothership: Mothership) extends AugmentedDroneController {
     showText(message)
   }
 
+  private def moveSomewhere() = {
+    val closestMineral = getClosestAvailableMineral(position)
+    if (closestMineral.isDefined) {
+      moveTo(closestMineral.get)
+      message = "moving toward mineral at " + closestMineral.get.position
+    } else {
+      if (goalPosition.isEmpty) {
+        goalPosition = Some(nextUnvisitedPosition())
+      }
+      moveTo(goalPosition.get)
+    }
+  }
+
+  override def onArrivesAtPosition(): Unit = {
+    if (goalPosition.isDefined && position == goalPosition.get) {
+      goalPosition = None
+    }
+  }
+
   override def onArrivesAtMineral(mineral: MineralCrystal) = {
     harvest(mineral)
+    currentMineral = Some(mineral)
     //assert(isHarvesting)
     //println("harvesting")
     message = "harvesting"

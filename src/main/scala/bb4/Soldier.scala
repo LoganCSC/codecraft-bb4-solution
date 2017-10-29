@@ -2,33 +2,66 @@ package bb4
 
 import cwinter.codecraft.util.maths.Vector2
 import bb4.Global._
-import scala.util.Random
 
 
 class Soldier extends AugmentedDroneController {
+
+  var msg = ""
+  var positionGoal: Option[Vector2] = None
 
   override def onTick(): Unit = {
 
     val closestEnemy = getClosestEnemy(position)
 
-    if (closestEnemy.isDefined) {  // !moving?
+    if (closestEnemy.isDefined) {
       val e = closestEnemy.get
-      if (position != e.lastKnownPosition)
-        moveTo(e.lastKnownPosition)
-    }
-    for (d <- dronesInSight.find(d => d.isEnemy && isInMissileRange(d))) {
-      fireMissilesAt(d)
+      if (e.isVisible && isInMissileRange(e)) {
+        fireMissilesAt(e)
+        moveTo(e)
+      } else if (e.lastKnownPosition != position) {
+        val vec = e.lastKnownPosition - position
+        val distToNewGoal = vec.lengthSquared
+        val distToLastGoal = if (positionGoal.isEmpty) Double.PositiveInfinity
+                             else (positionGoal.get - position).lengthSquared
+        if (distToNewGoal < distToLastGoal) {
+          moveTo(e.lastKnownPosition)
+          //positionGoal = Some(e.lastKnownPosition)
+          msg = "moving toward closer enemy: " + e.lastKnownPosition
+        }
+      }
     }
 
     if (!isMoving) {
+      moveSomewhere()
+    }
+    showText(msg)
+  }
+
+  override def onArrivesAtPosition(): Unit = {
+    if (positionGoal.isDefined && position == positionGoal.get)
+      positionGoal = None
+    msg = "arrived"
+    //moveSomewhere()
+  }
+
+  private def moveSomewhere(): Unit = {
+    val r = RND.nextDouble()
+    if (r < 0.2) {
+      // move to protect harvesters
       val closeHarveseter = getClosestHarvester(position)
-      if (closeHarveseter.isDefined && !alliesInSight.contains(closeHarveseter.get)) { // protect harvesters
-        moveTo(closeHarveseter.get) // sometimes npe
-      } else {
-        val randomDirection = Vector2(2 * math.Pi * Random.nextDouble())
-        val targetPosition = position + 300 * randomDirection
-        moveTo(targetPosition)
+      if (positionGoal.isEmpty &&closeHarveseter.isDefined && !alliesInSight.contains(closeHarveseter.get)) {
+        positionGoal = Some(closeHarveseter.get.position)
+        moveTo(positionGoal.get)
+        msg = "moving toward harvester"
       }
+    } else {
+      if (positionGoal.isEmpty) {
+        positionGoal = Some(nextUnvisitedPosition())
+        msg = "toward next unvisited"
+      } else {
+        msg = "toward prev unvisited"
+      }
+      moveTo(positionGoal.get)
     }
   }
 

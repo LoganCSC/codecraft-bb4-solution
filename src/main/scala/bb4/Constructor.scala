@@ -20,9 +20,7 @@ class Constructor extends Mothership {
       }
 
       if (!isMoving) {
-        val randomDirection = Vector2(2 * math.Pi * Random.nextDouble())
-        val targetPosition = position + 100 * randomDirection
-        moveTo(targetPosition)
+        moveTo(nextUnvisitedPosition())
       }
     }
   }
