@@ -59,7 +59,7 @@ class Harvester(mothership: Mothership) extends AugmentedDroneController {
       message = "moving toward mineral at " + closestMineral.get.position
     } else {
       if (goalPosition.isEmpty) {
-        goalPosition = Some(nextUnvisitedPosition())
+        goalPosition = Some(closestUnvisitedPosition(position))
       }
       moveTo(goalPosition.get)
     }

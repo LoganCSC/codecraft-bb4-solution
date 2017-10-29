@@ -32,10 +32,6 @@ object Global {
 
   private def genWorldLocations(mother: Mothership): List[Vector2] = {
     val rect = mother.worldSize
-    //val xDim: Int = (rect.width / GRID_SIZE).toInt - 1
-    //val yDim: Int = (rect.height / GRID_SIZE).toInt - 1
-
-    println("rect world  w:" + rect.width + " ht: " + rect.height)
     val xDim = math.ceil(rect.width / GRID_SIZE).toInt
     val yDim = math.ceil(rect.height / GRID_SIZE).toInt
     val xOffset = (0.5 * rect.width / GRID_SIZE).toInt
@@ -44,8 +40,8 @@ object Global {
     val g = Array.tabulate[Vector2](xDim, yDim) {
       (x, y) => new  Vector2((x - xOffset + 0.5F) * GRID_SIZE , (y - yOffset + 0.5F) * GRID_SIZE)
     }
-    val locations = scala.util.Random.shuffle((for (vpos <- g; pos <- vpos) yield pos).toList)
-    println("loc = " + locations.take(10).mkString(", "))
+    //val locations = scala.util.Random.shuffle((for (vpos <- g; pos <- vpos) yield pos).toList)
+    val locations = (for (vpos <- g; pos <- vpos) yield pos).toList
     locations
   }
 
@@ -72,13 +68,23 @@ object Global {
   }
 
   def getClosestEnemy(pos: Vector2): Option[Drone] = {
-    val candidates = enemies.filter(!_.isDead)
-    if (candidates.isEmpty) {
+    enemies = enemies.filter(!_.isDead)
+    if (enemies.isEmpty) {
       None
     } else {
-      val closest = candidates.minBy(m => (pos - m.lastKnownPosition).lengthSquared)
+      val visibleEnemies = enemies.filter(m => m.isVisible)
+      val closest = if (visibleEnemies.nonEmpty) visibleEnemies.minBy(m => (pos - m.position).lengthSquared)
+                   else enemies.minBy(m => (pos - m.lastKnownPosition).lengthSquared)
       Some(closest)
     }
+  }
+
+  /** @return somewhere no friendly drone has been before */
+  def closestUnvisitedPosition(position: Vector2): Vector2 = {
+    if (allLocations.isEmpty) {
+      allLocations = genWorldLocations(mothers.head) // repopulate
+    }
+    allLocations.minBy(p => (p - position).lengthSquared)
   }
 
   /** @return somewhere no friendly drone has been before */

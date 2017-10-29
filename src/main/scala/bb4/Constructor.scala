@@ -20,7 +20,7 @@ class Constructor extends Mothership {
       }
 
       if (!isMoving) {
-        moveTo(nextUnvisitedPosition())
+        moveTo(closestUnvisitedPosition(position))
       }
     }
   }
