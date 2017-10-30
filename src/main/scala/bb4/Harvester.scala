@@ -35,7 +35,8 @@ class Harvester(mothership: Mothership) extends AugmentedDroneController {
           currentMineral = None
           message = "done harvesting"
         }
-        if (!isMoving) moveSomewhere()
+        if (!isMoving)
+          moveSomewhere()
       }
       if (fleeing) {
         fleeingTicks += 1
@@ -61,6 +62,7 @@ class Harvester(mothership: Mothership) extends AugmentedDroneController {
       if (goalPosition.isEmpty) {
         goalPosition = Some(closestUnvisitedPosition(position))
       }
+      message = "moving to " + goalPosition.get
       moveTo(goalPosition.get)
     }
   }

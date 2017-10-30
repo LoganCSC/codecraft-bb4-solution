@@ -23,14 +23,14 @@ object Global {
   var maxHarvesters = 3  // this can change
   var nSoldiers = 0
   var unvisitedLocations: Set[Vector2] = Set()
-  var allLocations: List[Vector2] = _
+  var allLocations: Set[Vector2] = _
 
   /** One time initialization */
   def initialize(mother: Mothership): Unit = {
     allLocations = genWorldLocations(mother)
   }
 
-  private def genWorldLocations(mother: Mothership): List[Vector2] = {
+  private def genWorldLocations(mother: Mothership): Set[Vector2] = {
     val rect = mother.worldSize
     val xDim = math.ceil(rect.width / GRID_SIZE).toInt
     val yDim = math.ceil(rect.height / GRID_SIZE).toInt
@@ -41,7 +41,7 @@ object Global {
       (x, y) => new  Vector2((x - xOffset + 0.5F) * GRID_SIZE , (y - yOffset + 0.5F) * GRID_SIZE)
     }
     //val locations = scala.util.Random.shuffle((for (vpos <- g; pos <- vpos) yield pos).toList)
-    val locations = (for (vpos <- g; pos <- vpos) yield pos).toList
+    val locations = (for (vpos <- g; pos <- vpos) yield pos).toSet
     locations
   }
 
@@ -84,7 +84,9 @@ object Global {
     if (allLocations.isEmpty) {
       allLocations = genWorldLocations(mothers.head) // repopulate
     }
-    allLocations.minBy(p => (p - position).lengthSquared)
+    val pos = allLocations.minBy(p => (p - position).lengthSquared)
+    allLocations -= pos
+    pos
   }
 
   /** @return somewhere no friendly drone has been before */
