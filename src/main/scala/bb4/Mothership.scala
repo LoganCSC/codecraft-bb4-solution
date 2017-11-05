@@ -1,13 +1,10 @@
 package bb4
 
-import scala.util.Random
 import Global._
-import cwinter.codecraft.util.maths.Vector2
 
 
 class Mothership extends AugmentedDroneController {
 
-  var msg = ""
   var moved: Boolean = false
 
   override def onTick(): Unit = {
@@ -16,16 +13,17 @@ class Mothership extends AugmentedDroneController {
       if (!moved && knownMinerals.nonEmpty) {
         moveTo(knownMinerals.head)
         moved = true
-        msg = "moving to mineral"
+        message = "moving to mineral"
       }
       if (!isMoving) {
         makeNewDrone()
-        msg = "building"
+        message = "building"
       }
     }
 
-    showText(msg)
+    super.onTick()
   }
+
 
   def makeNewDrone(): Unit = {
     if (harvesters.size < maxHarvesters) {

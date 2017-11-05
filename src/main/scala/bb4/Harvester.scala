@@ -11,19 +11,13 @@ class Harvester(mothership: Mothership) extends AugmentedDroneController {
 
   /** The currently harvested mineral, if any */
   var currentMineral: Option[MineralCrystal] = None
-  var message = ""
-  var fleeingTicks: Int = 0
-  var fleeing: Boolean = false
   var goalPosition: Option[Vector2] = None
 
   override def onTick(): Unit = {
 
     val nearbyEnemy = dronesInSight.find(d => d.isEnemy && d.missileBatteries > 0)
     if (nearbyEnemy.isDefined) {
-      val dir = (position - nearbyEnemy.get.position).orientation
-      moveInDirection(dir)  // flee
-      fleeing = true
-      message = "fleeing!"
+      flee(nearbyEnemy.get)
     } else {
       if (availableStorage == 0) {
         moveTo(mothership)
@@ -38,22 +32,12 @@ class Harvester(mothership: Mothership) extends AugmentedDroneController {
         if (!isMoving)
           moveSomewhere()
       }
-      if (fleeing) {
-        fleeingTicks += 1
-        message = "fleeing " + fleeingTicks
-        if (fleeingTicks > 100) {
-          fleeingTicks = 0
-          fleeing = false
-          message = ""
-          moveSomewhere()
-        }
-      }
     }
 
-    showText(message)
+    super.onTick()
   }
 
-  private def moveSomewhere() = {
+  override def moveSomewhere() = {
     val closestMineral = getClosestAvailableMineral(position)
     if (closestMineral.isDefined) {
       moveTo(closestMineral.get)
