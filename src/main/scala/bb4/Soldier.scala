@@ -35,17 +35,11 @@ class Soldier extends AugmentedDroneController {
       val e = closestEnemy.get
       if (!e.isDead && e.isVisible && isInMissileRange(e)) {
         fireMissilesAt(e)
-        moveTo(e)
+        //moveTo(e)
       } else if (e.lastKnownPosition != position) {
-        //val vec = e.lastKnownPosition - position
-        //val distToNewGoal = vec.lengthSquared
-        //val distToLastGoal = if (positionGoal.isEmpty) Double.PositiveInfinity
-        //                     else (positionGoal.get - position).lengthSquared
-        //if (distToNewGoal < distToLastGoal) {
-          moveTo(e.lastKnownPosition)
-          positionGoal = Some(e.lastKnownPosition)
-          msg = "moving toward closer enemy: " + e.lastKnownPosition
-        //}
+        moveTo(e.lastKnownPosition)
+        positionGoal = Some(e.lastKnownPosition)
+        msg = "moving toward closer enemy: " + e.lastKnownPosition
       }
     }
     if (!isMoving) {
